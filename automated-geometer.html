@@ -1,0 +1,222 @@
+<html>
+
+<head>
+    <title>Automated Geometer</title>
+    <meta charset="utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
+
+</head>
+<body onload="go()">
+
+<div>
+    <h1>Welcome to the Automated Geometer!</h1>
+    <div id="geogebra_loading"><p>Please wait for GeoGebra to load...</p></div>
+    <div id="geogebra_loaded" hidden="true">
+        <p>Let us consider this initial input construction (you may freely edit the construction
+           or upload another one as well):</p>
+    </div>
+
+    <div id="applet_container"></div>
+    <button id="start_stop" type="button" onclick="start_stop_button()" hidden="true">Start discovery</button>
+
+    <div id="results" hidden="true">
+       <p>Now the following theorems can be obtained:</p>
+       <div><textarea id="outputbox" rows="5" cols="80"></textarea></div>
+    </div>
+
+</div>
+
+<script type="text/javascript" src="https://cdn.geogebra.org/apps/deployggb.js"></script>
+<script type="text/javascript" src="combinations.js"></script>
+
+<script type='text/javascript'>
+
+    function go() {
+
+        running = false;
+
+        // 1. Setup GeoGebra
+        var parameters = {
+            "id": "ggbApplet",
+            "width": 800,
+            "height": 400,
+            "showToolBar": false,
+            "borderColor": null,
+            "showMenuBar": true,
+            "allowStyleBar": false,
+            "showAlgebraInput": false,
+            "enableLabelDrags": true,
+            "enableShiftDragZoom": true,
+            "capturingThreshold": null,
+            "showToolBarHelp": false,
+            "errorDialogsActive": false,
+            "showTutorialLink": false,
+            "showLogging": true,
+            "useBrowserForJS": false,
+            "perspective": "AG"
+        };
+
+        parameters.appletOnLoad = function (api) {
+            // This code will run after the applet has been injected.
+            var element = document.getElementById('geogebra_loading');
+            element.hidden = true;
+            var element = document.getElementById('geogebra_loaded');
+            element.hidden = false;
+
+            // 3. Create initial objects (this could be done later as well)
+            gA = ggbApplet;
+            gA.setAxesVisible(1, false, false, false);
+            gA.evalCommand("A=(-3,1)");
+            gA.evalCommand("B=(4,1)");
+            gA.evalCommand("C=(2,4)");
+            gA.evalCommand("D=Midpoint(A,B)");
+            gA.evalCommand("E=Midpoint(B,C)");
+            gA.evalCommand("F=Midpoint(C,A)");
+            gA.evalCommand("G=Midpoint(D,E)");
+
+            // 4. To do CAS computations, the CAS must be loaded somehow.
+            // There are multiple ways to do that. The best way is
+            // to call the CAS implicitly and the computation result is
+            // collected into a dummy variable.
+            gA.evalCommand("dummy=Factor(x^2+x)");
+            gA.setVisible("dummy", false);
+            // There is a quick result in the dummy variable, "undefined",
+            // but the CAS is starting to be loaded in the background,
+            // asynchronously. However, the immediate result of the command
+            // is synchronous, that is, it is obtained immediately after
+            // evalCommand is performed.
+
+            // 5. Register a listener to be informed on the final result
+            // when the dummy variable is computed. On the finished computation
+            // the dummy variable will be updated and the listener will
+            // be notified.
+            gA.registerUpdateListener("go_heavy");
+        };
+
+        // 2. Inject applet
+        var applet = new GGBApplet(parameters, '5.0', 'applet_container');
+        applet.inject('applet_container');
+    }
+
+    function sleep(ms) {
+        return new Promise(resolve => setTimeout(resolve, ms));
+    }
+
+    function output(message) {
+        var element = document.getElementById('outputbox');
+        var oldValue = element.value;
+        element.value = oldValue + message + "\n";
+        element.scrollTop = 99999;
+        }
+
+    function outputElapsedTime() {
+        var endTime = new Date();
+        var timeDiff = endTime - startTime;
+        timeDiff /= 1000;
+        var seconds = Math.round(timeDiff % 60);
+        timeDiff = Math.floor(timeDiff / 60);
+        var minutes = Math.round(timeDiff % 60);
+        timeDiff = Math.floor(timeDiff / 60);
+        var hours = Math.round(timeDiff % 24);
+        output("Elapsed time: " + hours + "h " + minutes + "m " + seconds + "s");
+    }
+
+    function start_stop_button() {
+        var buttontext = "Pause computations";
+        if (!running) {
+            running = true;
+            } else {
+            running = false;
+            buttontext = "Continue computations";
+            }
+        var element = document.getElementById('start_stop');
+        element.innerHTML = buttontext;
+        }
+
+    async function go_heavy(object) {
+        // 6. This is called when the dummy object has been updated
+        // on completion of the dummy computation.
+        if (object == "dummy") {
+            // 7. Remove this listener to avoid re-launching this code.
+            // Also remove dummy object.
+            gA.unregisterUpdateListener("go_heavy");
+            gA.deleteObject("dummy");
+
+            // 8. Start real computations. Note that all evalCommand
+            // computations are synchronous, that is, from this point on
+            // no asynchronous code must be written.
+
+            var button = document.getElementById('start_stop');
+            button.hidden = false;
+            while (!running) {
+                await sleep(300);
+                }
+            var results = document.getElementById('results');
+            results.hidden = false;
+
+            cases = 0;
+            found = 0;
+            startTime = new Date();
+
+            points = gA.getAllObjectNames("point");
+
+            // A. COLLINEAR TRIPLETS
+            point_triplets = k_combinations(points, 3);
+            console.log(point_triplets);
+
+            for (var i = 0; i < point_triplets.length; ++i, ++cases) {
+                var A=point_triplets[i][0];
+                var B=point_triplets[i][1];
+                var C=point_triplets[i][2];
+                var statement = "AreCollinear("+A+","+B+","+C+")";
+                gA.evalCommand("pd=ProveDetails("+statement+")");
+                var result = gA.getValueString("pd");
+                if (result.includes("true")) {
+                    found++;
+                    await sleep(1);
+                    output(found + ". " + statement);
+                    }
+                while (!running) {
+                    await sleep(300);
+                    }
+                }
+
+            // B. SEGMENTS HAVING EQUAL LENGTHS
+            point_tuples = k_combinations(points, 2);
+            segment_tuples = k_combinations(point_tuples, 2);
+
+            for (var i = 0; i < segment_tuples.length; ++i, ++cases) {
+                var A=segment_tuples[i][0][0];
+                var B=segment_tuples[i][0][1];
+                var C=segment_tuples[i][1][0];
+                var D=segment_tuples[i][1][1];
+                gA.evalCommand("a=Segment(" + A + "," + B + ")");
+                gA.evalCommand("b=Segment(" + C + "," + D + ")");
+                var statement = "a==b";
+                gA.evalCommand("pd=ProveDetails("+statement+")");
+                var result = gA.getValueString("pd");
+                gA.deleteObject("a"); // this will implicitly delete pd as well
+                gA.deleteObject("b");
+                if (result.includes("true")) {
+                    found++;
+                    await sleep(1);
+                    output(found + ". " + A + B + "==" + C + D);
+                    }
+                while (!running) {
+                    await sleep(300);
+                    }
+                }
+
+            // FINAL REPORT
+            output("Finished, found " + found + " theorems among " + cases + " possible statements");
+            outputElapsedTime();
+
+            button.hidden = true;
+        }
+    }
+
+</script>
+
+</body>
+</html>
