@@ -14,7 +14,7 @@
     <div id="geogebra_loading"><p>Please wait for GeoGebra to load...</p></div>
     <div id="geogebra_loaded" hidden="true">
         <p>Let us consider this initial input construction (you may freely edit the construction
-           or upload another one as well):</p>
+           or upload another one as well; only the visible points will be observed):</p>
     </div>
 
     <div id="applet_container"></div>
@@ -186,7 +186,13 @@
             found = 0;
             startTime = new Date();
 
-            points = gA.getAllObjectNames("point");
+            var all_points = gA.getAllObjectNames("point");
+            var points = [];
+            for (var i = 0; i < all_points.length; ++i) {
+                if (gA.getVisible(all_points[i])) {
+                    points.push(all_points[i]);
+                    }
+                }
 
             var relations = document.getElementById("relations");
             var selected_relations = getSelectValues(relations);
