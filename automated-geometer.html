@@ -23,16 +23,16 @@
         <option value="3-AreCollinear-%3$s∈%1$s%2$s" selected>Collinearity of three points</option>
         <option value="22-AreCongruent-%1$s%2$s=%3$s%4$s" selected>Equality of distances between two points</option>
         <option value="22-ArePerpendicular-%1$s%2$s⟂%3$s%4$s">Perpendicularity of segments defined by two points</option>
-        <option value="22-AreParallel-are parallel-%1$s%2$s∥%3$s%4$s">Parallelism of segments defined by two points</option>
+        <option value="22-AreParallel-%1$s%2$s∥%3$s%4$s">Parallelism of segments defined by two points</option>
     </select>
     </p>
     </div>
     <button id="start_stop" type="button" onclick="start_stop_button()" hidden="true">Start discovery</button>
 
     <div id="results" hidden="true">
-       <p>Now the following theorems can be obtained:<br>
-       <textarea id="outputbox" rows="5" cols="80" readonly></textarea>
-       </p>
+       <p>Now the following theorems can be obtained<span id="processed"></span>:<br><ol><div id="outputbox"
+           style="-webkit-column-count:10;-moz-column-count:10;column-count:10;list-style-position:inside;"></div></ol></p>
+       <p><div id="final_info"></div></p>
     </div>
 
 </div>
@@ -118,13 +118,16 @@
     }
 
     function output(message) {
-        var element = document.getElementById('outputbox');
-        var oldValue = element.value;
-        element.value = oldValue + message + "\n";
-        element.scrollTop = 99999;
+        var outputbox = document.getElementById('outputbox');
+        outputbox.innerHTML += message;
+        outputbox.scrollTop = 99999;
+        window.scrollTo(0,document.body.scrollHeight);
+        var processed = document.getElementById('processed');
+        var percent = Math.floor(cases / all_cases * 100);
+        processed.innerHTML = " (" + cases + "/" + all_cases +" processed, " + percent + "%)";
         }
 
-    function outputElapsedTime() {
+    function getElapsedTime() {
         var endTime = new Date();
         var timeDiff = endTime - startTime;
         timeDiff /= 1000;
@@ -133,7 +136,7 @@
         var minutes = Math.round(timeDiff % 60);
         timeDiff = Math.floor(timeDiff / 60);
         var hours = Math.round(timeDiff % 24);
-        output("Elapsed time: " + hours + "h " + minutes + "m " + seconds + "s");
+        return "Elapsed time: " + hours + "h " + minutes + "m " + seconds + "s";
     }
 
     function start_stop_button() {
@@ -194,17 +197,26 @@
                     }
                 }
 
+            point_triplets = k_combinations(points, 3);
+            point_tuples = k_combinations(points, 2);
+            segment_tuples = k_combinations(point_tuples, 2);
+
+            all_cases = 0;
             var relations = document.getElementById("relations");
             var selected_relations = getSelectValues(relations);
             var selected_relations_details = [];
             for (var i = 0; i < selected_relations.length; ++i) {
                 selected_relations_details.push(selected_relations[i].split("-"));
+                if (selected_relations_details[i][0] == "3") {
+                    all_cases += point_triplets.length;
+                    }
+                if (selected_relations_details[i][0] == "22") {
+                    all_cases += segment_tuples.length;
+                    }
                 }
             relations.disabled = true;
 
             // A. COLLINEAR TRIPLETS
-            point_triplets = k_combinations(points, 3);
-            console.log(point_triplets);
 
             for (var r = 0; r < selected_relations.length; ++r) {
 
@@ -223,7 +235,7 @@
                             found++;
                             await sleep(1);
                             var text = sprintf(statement_text, A, B, C);
-                            output(found + ". " + text);
+                            output("<li>" + text + "</li>");
                             }
                         while (!running) {
                             await sleep(300);
@@ -233,8 +245,6 @@
                 }
 
             // B. SEGMENTS HAVING EQUAL LENGTHS, ETC.
-            point_tuples = k_combinations(points, 2);
-            segment_tuples = k_combinations(point_tuples, 2);
 
             for (var r = 0; r < selected_relations.length; ++r) {
 
@@ -258,7 +268,7 @@
                             found++;
                             await sleep(1);
                             var text = sprintf(statement_text, A, B, C, D);
-                            output(found + ". " + text);
+                            output("<li>" + text + "</li>");
                             }
                         while (!running) {
                             await sleep(300);
@@ -267,10 +277,17 @@
                     }
                 }
 
+            var processed = document.getElementById('processed');
+            processed.innerHTML = "";
+
+
             // FINAL REPORT
-            output("Finished, found " + found + " theorems among " + cases + " possible statements");
-            outputElapsedTime();
-            output("Please reload the page if you want to start a new experiment");
+            var final_info = document.getElementById('final_info');
+            final_info.innerHTML = "<p>Finished, found " + found + " theorems among " + cases + " possible statements.<br>"
+                + getElapsedTime() + "</p>";
+            final_info.innerHTML += "<p>Please reload the page if you want to start a new experiment.</p>";
+            final_info.scrollTop = 1000;
+            window.scrollTo(0,document.body.scrollHeight);
 
             button.hidden = true;
         }
