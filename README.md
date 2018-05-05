@@ -22,3 +22,9 @@ All of these efforts are based on GeoGebra's recent improvements, the ["Automate
 * Francisco Botana <fbotana@uvigo.es>
 * Zoltán Kovács <zoltan@geogebra.org>
 * Tomás Recio <tomas.recio@unican.es>
+
+### External libraries
+
+This program uses the [combinations.js](https://gist.github.com/axelpale/3118596)
+and [sprintf.js](https://github.com/alexei/sprintf.js) JavaScript libraries,
+written by Akseli Palén and Alexandru Mărășteanu, respectively.

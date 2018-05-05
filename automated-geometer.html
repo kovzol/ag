@@ -4,7 +4,6 @@
     <title>Automated Geometer</title>
     <meta charset="utf-8">
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
-    <meta http-equiv="Content-Type" content="text/html; charset=utf-8"/>
 
 </head>
 <body onload="go()">
@@ -21,10 +20,10 @@
     <div id="select_relations" hidden="true">
         <p>Select relations to check:<br>
         <select id="relations" multiple>
-        <option value="3-AreCollinear-are collinear" selected>Collinearity of three points</option>
-        <option value="22-AreCongruent-are of equal lengths" selected>Equality of distances between two points</option>
-        <option value="22-ArePerpendicular-are perpendicular">Perpendicularity of segments defined by two points</option>
-        <option value="22-AreParallel-are parallel">Parallelism of segments defined by two points</option>
+        <option value="3-AreCollinear-%3$s∈%1$s%2$s" selected>Collinearity of three points</option>
+        <option value="22-AreCongruent-%1$s%2$s=%3$s%4$s" selected>Equality of distances between two points</option>
+        <option value="22-ArePerpendicular-%1$s%2$s⟂%3$s%4$s">Perpendicularity of segments defined by two points</option>
+        <option value="22-AreParallel-are parallel-%1$s%2$s∥%3$s%4$s">Parallelism of segments defined by two points</option>
     </select>
     </p>
     </div>
@@ -40,6 +39,7 @@
 
 <script type="text/javascript" src="https://cdn.geogebra.org/apps/deployggb.js"></script>
 <script type="text/javascript" src="combinations.js"></script>
+<script type="text/javascript" src="sprintf.js"></script>
 
 <script type='text/javascript'>
 
@@ -222,7 +222,7 @@
                         if (result.includes("true")) {
                             found++;
                             await sleep(1);
-                            var text = A + ", " + B + " and " + C + " " + statement_text;
+                            var text = sprintf(statement_text, A, B, C);
                             output(found + ". " + text);
                             }
                         while (!running) {
@@ -257,7 +257,7 @@
                         if (result.includes("true")) {
                             found++;
                             await sleep(1);
-                            var text = A + B + " and " + C + D + " " + statement_text;
+                            var text = sprintf(statement_text, A, B, C, D);
                             output(found + ". " + text);
                             }
                         while (!running) {
