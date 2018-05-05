@@ -18,11 +18,22 @@
     </div>
 
     <div id="applet_container"></div>
+    <div id="select_relations" hidden="true">
+        <p>Select relations to check:<br>
+        <select id="relations" multiple>
+        <option value="3-AreCollinear-are collinear" selected>Collinearity of three points</option>
+        <option value="22-AreCongruent-are of equal lengths" selected>Equality of distances between two points</option>
+        <option value="22-ArePerpendicular-are perpendicular">Perpendicularity of segments defined by two points</option>
+        <option value="22-AreParallel-are parallel">Parallelism of segments defined by two points</option>
+    </select>
+    </p>
+    </div>
     <button id="start_stop" type="button" onclick="start_stop_button()" hidden="true">Start discovery</button>
 
     <div id="results" hidden="true">
-       <p>Now the following theorems can be obtained:</p>
-       <div><textarea id="outputbox" rows="5" cols="80"></textarea></div>
+       <p>Now the following theorems can be obtained:<br>
+       <textarea id="outputbox" rows="5" cols="80" readonly></textarea>
+       </p>
     </div>
 
 </div>
@@ -63,6 +74,8 @@
             element.hidden = true;
             var element = document.getElementById('geogebra_loaded');
             element.hidden = false;
+            var element = document.getElementById('select_relations');
+            element.hidden = false;
 
             // 3. Create initial objects (this could be done later as well)
             gA = ggbApplet;
@@ -74,6 +87,7 @@
             gA.evalCommand("E=Midpoint(B,C)");
             gA.evalCommand("F=Midpoint(C,A)");
             gA.evalCommand("G=Midpoint(D,E)");
+            gA.evalCommand("ZoomIn(-4,0,5,5)");
 
             // 4. To do CAS computations, the CAS must be loaded somehow.
             // There are multiple ways to do that. The best way is
@@ -134,6 +148,19 @@
         element.innerHTML = buttontext;
         }
 
+    function getSelectValues(select) {
+        var result = [];
+        var options = select && select.options;
+        var opt;
+        for (var i=0, iLen=options.length; i<iLen; i++) {
+            opt = options[i];
+            if (opt.selected) {
+               result.push(opt.value || opt.text);
+               }
+            }
+        return result;
+        }
+
     async function go_heavy(object) {
         // 6. This is called when the dummy object has been updated
         // on completion of the dummy computation.
@@ -161,56 +188,83 @@
 
             points = gA.getAllObjectNames("point");
 
+            var relations = document.getElementById("relations");
+            var selected_relations = getSelectValues(relations);
+            var selected_relations_details = [];
+            for (var i = 0; i < selected_relations.length; ++i) {
+                selected_relations_details.push(selected_relations[i].split("-"));
+                }
+            relations.disabled = true;
+
             // A. COLLINEAR TRIPLETS
             point_triplets = k_combinations(points, 3);
             console.log(point_triplets);
 
-            for (var i = 0; i < point_triplets.length; ++i, ++cases) {
-                var A=point_triplets[i][0];
-                var B=point_triplets[i][1];
-                var C=point_triplets[i][2];
-                var statement = "AreCollinear("+A+","+B+","+C+")";
-                gA.evalCommand("pd=ProveDetails("+statement+")");
-                var result = gA.getValueString("pd");
-                if (result.includes("true")) {
-                    found++;
-                    await sleep(1);
-                    output(found + ". " + statement);
-                    }
-                while (!running) {
-                    await sleep(300);
+            for (var r = 0; r < selected_relations.length; ++r) {
+
+                if (selected_relations_details[r][0] == "3") {
+                    var statement_start = selected_relations_details[r][1];
+                    var statement_text = selected_relations_details[r][2];
+
+                    for (var i = 0; i < point_triplets.length; ++i, ++cases) {
+                        var A=point_triplets[i][0];
+                        var B=point_triplets[i][1];
+                        var C=point_triplets[i][2];
+                        var statement = statement_start + "(" + A + "," + B + "," + C + ")";
+                        gA.evalCommand("pd=ProveDetails("+statement+")");
+                        var result = gA.getValueString("pd");
+                        if (result.includes("true")) {
+                            found++;
+                            await sleep(1);
+                            var text = A + ", " + B + " and " + C + " " + statement_text;
+                            output(found + ". " + text);
+                            }
+                        while (!running) {
+                            await sleep(300);
+                            }
+                        }
                     }
                 }
 
-            // B. SEGMENTS HAVING EQUAL LENGTHS
+            // B. SEGMENTS HAVING EQUAL LENGTHS, ETC.
             point_tuples = k_combinations(points, 2);
             segment_tuples = k_combinations(point_tuples, 2);
 
-            for (var i = 0; i < segment_tuples.length; ++i, ++cases) {
-                var A=segment_tuples[i][0][0];
-                var B=segment_tuples[i][0][1];
-                var C=segment_tuples[i][1][0];
-                var D=segment_tuples[i][1][1];
-                gA.evalCommand("a=Segment(" + A + "," + B + ")");
-                gA.evalCommand("b=Segment(" + C + "," + D + ")");
-                var statement = "a==b";
-                gA.evalCommand("pd=ProveDetails("+statement+")");
-                var result = gA.getValueString("pd");
-                gA.deleteObject("a"); // this will implicitly delete pd as well
-                gA.deleteObject("b");
-                if (result.includes("true")) {
-                    found++;
-                    await sleep(1);
-                    output(found + ". " + A + B + "==" + C + D);
-                    }
-                while (!running) {
-                    await sleep(300);
+            for (var r = 0; r < selected_relations.length; ++r) {
+
+                if (selected_relations_details[r][0] == "22") {
+                    var statement_start = selected_relations_details[r][1];
+                    var statement_text = selected_relations_details[r][2];
+
+                    for (var i = 0; i < segment_tuples.length; ++i, ++cases) {
+                        var A=segment_tuples[i][0][0];
+                        var B=segment_tuples[i][0][1];
+                        var C=segment_tuples[i][1][0];
+                        var D=segment_tuples[i][1][1];
+                        gA.evalCommand("a=Segment(" + A + "," + B + ")");
+                        gA.evalCommand("b=Segment(" + C + "," + D + ")");
+                        var statement = statement_start + "(a,b)";
+                        gA.evalCommand("pd=ProveDetails("+statement+")");
+                        var result = gA.getValueString("pd");
+                        gA.deleteObject("a"); // this will implicitly delete pd as well
+                        gA.deleteObject("b");
+                        if (result.includes("true")) {
+                            found++;
+                            await sleep(1);
+                            var text = A + B + " and " + C + D + " " + statement_text;
+                            output(found + ". " + text);
+                            }
+                        while (!running) {
+                            await sleep(300);
+                            }
+                        }
                     }
                 }
 
             // FINAL REPORT
             output("Finished, found " + found + " theorems among " + cases + " possible statements");
             outputElapsedTime();
+            output("Please reload the page if you want to start a new experiment");
 
             button.hidden = true;
         }
