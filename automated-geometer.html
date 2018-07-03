@@ -245,36 +245,61 @@
                 }
 
             // B. SEGMENTS HAVING EQUAL LENGTHS, ETC.
-
             for (var r = 0; r < selected_relations.length; ++r) {
 
                 if (selected_relations_details[r][0] == "22") {
+                    var colorMap = {};
+                    var colorFound = 0;
                     var statement_start = selected_relations_details[r][1];
                     var statement_text = selected_relations_details[r][2];
-
+                    var colors = [ 0x1f77b4, 0xaec7e8, 0xff7f0e, 0xffbb78, 0x2ca02c,
+                                   0x98df8a, 0xd62728, 0xff9896, 0x9467bd, 0xc5b0d5,
+                                   0x8c564b, 0xc49c94, 0xe377c2, 0xf7b6d2, 0x7f7f7f,
+                                   0xc7c7c7, 0xbcbd22, 0xdbdb8d, 0x17becf, 0x9edae5];
                     for (var i = 0; i < segment_tuples.length; ++i, ++cases) {
                         var A=segment_tuples[i][0][0];
                         var B=segment_tuples[i][0][1];
                         var C=segment_tuples[i][1][0];
                         var D=segment_tuples[i][1][1];
-                        gA.evalCommand("a=Segment(" + A + "," + B + ")");
-                        gA.evalCommand("b=Segment(" + C + "," + D + ")");
-                        var statement = statement_start + "(a,b)";
+                        var segAB = "s_{" + A + "," + B + "}";
+                        var segCD = "s_{" + C + "," + D + "}";
+                        if (!(gA.getValue(segAB) > 0)) {
+                            gA.evalCommand(segAB + "=Segment(" + A + "," + B + ")");
+                            gA.setLabelVisible(segAB, false);
+                            gA.setVisible(segAB, false);
+                        }
+                        if (!(gA.getValue(segCD) > 0)) {
+                            gA.evalCommand(segCD + "=Segment(" + C + "," + D + ")");
+                            gA.setLabelVisible(segCD, false);
+                            gA.setVisible(segCD, false);
+                        }
+                        var statement = statement_start + "("+segAB+","+segCD+")";
                         gA.evalCommand("pd=ProveDetails("+statement+")");
                         var result = gA.getValueString("pd");
-                        gA.deleteObject("a"); // this will implicitly delete pd as well
-                        gA.deleteObject("b");
                         if (result.includes("true")) {
                             found++;
                             await sleep(1);
                             var text = sprintf(statement_text, A, B, C, D);
                             output("<li>" + text + "</li>");
+                            if (!colorMap[segAB]) {
+                                colorMap[segAB] = colors[colorFound++];
+                                }
+                            colorMap[segCD] = colorMap[segAB];
+                            var col = colorMap[segAB] || 0xAAAAAA;
+                            gA.setVisible(segAB, true);
+                            gA.setColor(segAB, col >> 16, (col >> 8) & 255 , col & 255);
+                            gA.evalCommand("SetDecoration(" + segAB + ",1)");
+                            gA.setVisible(segCD, true);
+                            gA.setColor(segCD, col >> 16, (col >> 8) & 255 , col & 255);
+                            gA.evalCommand("SetDecoration(" + segCD + ",1)");
                             }
                         while (!running) {
                             await sleep(300);
                             }
                         }
                     }
+                // delete pd
+                gA.deleteObject("pd");
                 }
 
             var processed = document.getElementById('processed');
