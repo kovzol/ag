@@ -165,9 +165,24 @@
         return result;
         }
 
-    function stopApplication() {
+    function endMessage(text) {
+        var final_info = document.getElementById('final_info');
+        final_info.innerHTML = "<p>" + text + ", found " + found + " theorems among " + cases + " possible statements.<br>"
+                + getElapsedTime() + "</p>";
+        final_info.innerHTML += "<p>Please reload the page if you want to start a new experiment.</p>";
+        final_info.scrollTop = 1000;
+        window.scrollTo(0,document.body.scrollHeight);
+
+        button.hidden = true;
+        }
+
+
+    function stopApplication(statement) {
+        endMessage("Crashed on checking " + statement);
+
         alert("Sorry, GeoGebra seems to be crashed.\nWe cannot continue from this point." +
-            "\nPlease try to use easier inputs to avoid such situations.");
+            "\nPlease try to use easier inputs to avoid such situations." +
+            "\nAlternatively, you may try the same input on a better machine.");
         throw("GeoGebra crashed");
         }
 
@@ -184,7 +199,7 @@
             // computations are synchronous, that is, from this point on
             // no asynchronous code must be written.
 
-            var button = document.getElementById('start_stop');
+            button = document.getElementById('start_stop');
             button.hidden = false;
             while (!running) {
                 await sleep(300);
@@ -238,13 +253,13 @@
                         var statement = statement_start + "(" + A + "," + B + "," + C + ")";
                         gA.evalCommand("pd=ProveDetails("+statement+")");
                         var result = gA.getValueString("pd");
+                        var text = sprintf(statement_text, A, B, C);
                         if (result == "") {
-                            stopApplication();
+                            stopApplication(text);
                             }
                         if (result.includes("true")) {
                             found++;
                             await sleep(1);
-                            var text = sprintf(statement_text, A, B, C);
                             if (result.includes('“c”}')) {
                                 text = '<span style="color:red">' + text + '</span>';
                                 }
@@ -275,15 +290,15 @@
                         var statement = statement_start + "(a,b)";
                         gA.evalCommand("pd=ProveDetails("+statement+")");
                         var result = gA.getValueString("pd");
+                        var text = sprintf(statement_text, A, B, C, D);
                         if (result == "") {
-                            stopApplication();
+                            stopApplication(text);
                             }
                         gA.deleteObject("a"); // this will implicitly delete pd as well
                         gA.deleteObject("b");
                         if (result.includes("true")) {
                             found++;
                             await sleep(1);
-                            var text = sprintf(statement_text, A, B, C, D);
                             if (result.includes('“c”}')) {
                                 text = '<span style="color:red">' + text + '</span>';
                                 }
@@ -299,16 +314,8 @@
             var processed = document.getElementById('processed');
             processed.innerHTML = "";
 
-
             // FINAL REPORT
-            var final_info = document.getElementById('final_info');
-            final_info.innerHTML = "<p>Finished, found " + found + " theorems among " + cases + " possible statements.<br>"
-                + getElapsedTime() + "</p>";
-            final_info.innerHTML += "<p>Please reload the page if you want to start a new experiment.</p>";
-            final_info.scrollTop = 1000;
-            window.scrollTo(0,document.body.scrollHeight);
-
-            button.hidden = true;
+            endMessage("Finished");
         }
     }
 
