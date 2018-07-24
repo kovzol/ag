@@ -165,6 +165,12 @@
         return result;
         }
 
+    function stopApplication() {
+        alert("Sorry, GeoGebra seems to be crashed.\nWe cannot continue from this point." +
+            "\nPlease try to use easier inputs to avoid such situations.");
+        throw("GeoGebra crashed");
+        }
+
     async function go_heavy(object) {
         // 6. This is called when the dummy object has been updated
         // on completion of the dummy computation.
@@ -232,6 +238,9 @@
                         var statement = statement_start + "(" + A + "," + B + "," + C + ")";
                         gA.evalCommand("pd=ProveDetails("+statement+")");
                         var result = gA.getValueString("pd");
+                        if (result == "") {
+                            stopApplication();
+                            }
                         if (result.includes("true")) {
                             found++;
                             await sleep(1);
@@ -266,6 +275,9 @@
                         var statement = statement_start + "(a,b)";
                         gA.evalCommand("pd=ProveDetails("+statement+")");
                         var result = gA.getValueString("pd");
+                        if (result == "") {
+                            stopApplication();
+                            }
                         gA.deleteObject("a"); // this will implicitly delete pd as well
                         gA.deleteObject("b");
                         if (result.includes("true")) {
