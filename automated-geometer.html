@@ -200,8 +200,12 @@
 
     function endMessage(text) {
         var final_info = document.getElementById('final_info');
+        var top_text = "";
+        if (top_appeared) {
+            top_text = "<span style=\"color:red\">Found theorems that are true only on parts.</span><br>";
+        }
         final_info.innerHTML = "<p>" + text + ", found " + found + " theorems among " + cases + " possible statements.<br>"
-            + getElapsedTime() + "</p>";
+            + top_text + getElapsedTime() + "</p>";
         final_info.scrollTop = 1000;
         window.scrollTo(0, document.body.scrollHeight);
 
@@ -289,6 +293,7 @@
             segment_tuples = k_combinations(point_tuples, 2);
 
             all_cases = 0;
+            top_appeared = false;
             relations = document.getElementById("relations");
             var selected_relations = getSelectValues(relations);
             var selected_relations_details = [];
@@ -327,6 +332,7 @@
                             await sleep(1);
                             if (result.includes('“c”}')) {
                                 text = '<span style="color:red">' + text + '</span>';
+                                top_appeared = true;
                             }
                             output("<li>" + text + "</li>");
                         }
@@ -382,6 +388,7 @@
                             true_on_parts = false;
                             if (result.includes('“c”}')) {
                                 text = '<span style="color:red">' + text + '</span>';
+                                top_appeared = true;
                                 true_on_parts = true;
                             }
                             output("<li>" + text + "</li>");
