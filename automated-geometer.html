@@ -215,6 +215,7 @@
             while (!running) {
                 await sleep(300);
             }
+            gA.setUndoPoint();
             var results = document.getElementById('results');
             results.hidden = false;
 
@@ -381,6 +382,7 @@
                 }
                 // delete pd
                 gA.deleteObject("pd");
+                gA.setUndoPoint();
             }
 
             var processed = document.getElementById('processed');
