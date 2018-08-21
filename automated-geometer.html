@@ -80,6 +80,8 @@
             // 3. Create initial objects (this could be done later as well)
             gA = ggbApplet;
             gA.setAxesVisible(1, false, false, false);
+            gA.setGridVisible(false);
+            /*
             gA.evalCommand("A=(-3,1)");
             gA.evalCommand("B=(4,1)");
             gA.evalCommand("C=(2,4)");
@@ -88,6 +90,7 @@
             gA.evalCommand("F=Midpoint(C,A)");
             gA.evalCommand("G=Midpoint(D,E)");
             gA.evalCommand("ZoomIn(-4,0,5,5)");
+            */
 
             // 4. To do CAS computations, the CAS must be loaded somehow.
             // There are multiple ways to do that. The best way is
@@ -271,18 +274,19 @@
                     }
                 }
 
+            var colorMap = {};
+            colorFound = 0;
+            var colors = [ 0x1f77b4, 0xaec7e8, 0xff7f0e, 0xffbb78, 0x2ca02c,
+                0x98df8a, 0xd62728, 0xff9896, 0x9467bd, 0xc5b0d5,
+                0x8c564b, 0xc49c94, 0xe377c2, 0xf7b6d2, 0x7f7f7f,
+                0xc7c7c7, 0xbcbd22, 0xdbdb8d, 0x17becf, 0x9edae5];
+
             // B. SEGMENTS HAVING EQUAL LENGTHS, ETC.
             for (var r = 0; r < selected_relations.length; ++r) {
 
                 if (selected_relations_details[r][0] == "22") {
-                    var colorMap = {};
-                    var colorFound = 0;
                     var statement_start = selected_relations_details[r][1];
                     var statement_text = selected_relations_details[r][2];
-                    var colors = [ 0x1f77b4, 0xaec7e8, 0xff7f0e, 0xffbb78, 0x2ca02c,
-                                   0x98df8a, 0xd62728, 0xff9896, 0x9467bd, 0xc5b0d5,
-                                   0x8c564b, 0xc49c94, 0xe377c2, 0xf7b6d2, 0x7f7f7f,
-                                   0xc7c7c7, 0xbcbd22, 0xdbdb8d, 0x17becf, 0x9edae5];
                     for (var i = 0; i < segment_tuples.length; ++i, ++cases) {
                         var A=segment_tuples[i][0][0];
                         var B=segment_tuples[i][0][1];
@@ -312,21 +316,54 @@
                         if (result.includes("true")) {
                             found++;
                             await sleep(1);
+                            true_on_parts = false;
                             if (result.includes('“c”}')) {
                                 text = '<span style="color:red">' + text + '</span>';
-                                }
+                                true_on_parts = true;
+                            }
                             output("<li>" + text + "</li>");
-                            if (!colorMap[segAB]) {
-                                colorMap[segAB] = colors[colorFound++];
+                            if (!true_on_parts) {
+                                if (statement_start == "AreCongruent") {
+                                    if (!colorMap[segAB]) {
+                                        colorMap[segAB] = colors[colorFound++];
+                                    }
+                                    colorMap[segCD] = colorMap[segAB];
+                                    var col = colorMap[segAB] || 0xAAAAAA;
+                                    gA.setVisible(segAB, true);
+                                    gA.setVisible(segCD, true);
+                                    gA.setColor(segAB, col >> 16, (col >> 8) & 255, col & 255);
+                                    gA.setColor(segCD, col >> 16, (col >> 8) & 255, col & 255);
+                                    // gA.evalCommand("SetDecoration(" + segAB + ",1)");
+                                    // gA.evalCommand("SetDecoration(" + segCD + ",1)");
+                                    }
+                                /*
+                                if (statement_start == "ArePerpendicular") {
+                                    var aABCD = "a_{" + A + "," + B + "," + C + "," + D + "}";
+                                    gA.evalCommand(aABCD + "=Angle(" + segAB + "," + segCD + ")");
+                                    gA.evalCommand("SetDecoration(" + aABCD + ",1)");
+                                    gA.setLabelVisible(aABCD, false);
+                                    }
+                                */
+                                if (statement_start == "AreParallel") {
+                                    var lAB = "l_{" + A + "," + B + "}";
+                                    var lCD = "l_{" + C + "," + D + "}";
+                                    if (!colorMap[lAB]) {
+                                        colorMap[lAB] = colors[colorFound++];
+                                    }
+                                    colorMap[lCD] = colorMap[lAB];
+                                    var col = colorMap[lAB] || 0xAAAAAA;
+                                    gA.evalCommand(lAB + "=Line(" + A + "," + B + ")");
+                                    gA.evalCommand(lCD + "=Line(" + C + "," + D + ")");
+                                    gA.setVisible(lAB, true);
+                                    gA.setVisible(lCD, true);
+                                    gA.setLabelVisible(lAB, false);
+                                    gA.setLabelVisible(lCD, false);
+                                    gA.setColor(lAB, col >> 16, (col >> 8) & 255, col & 255);
+                                    gA.setColor(lCD, col >> 16, (col >> 8) & 255, col & 255);
+                                    gA.setLineStyle(lAB, 2);
+                                    gA.setLineStyle(lCD, 2);
+                                    }
                                 }
-                            colorMap[segCD] = colorMap[segAB];
-                            var col = colorMap[segAB] || 0xAAAAAA;
-                            gA.setVisible(segAB, true);
-                            gA.setColor(segAB, col >> 16, (col >> 8) & 255 , col & 255);
-                            gA.evalCommand("SetDecoration(" + segAB + ",1)");
-                            gA.setVisible(segCD, true);
-                            gA.setColor(segCD, col >> 16, (col >> 8) & 255 , col & 255);
-                            gA.evalCommand("SetDecoration(" + segCD + ",1)");
                             }
                         while (!running) {
                             await sleep(300);
