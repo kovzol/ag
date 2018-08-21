@@ -13,26 +13,35 @@
     <div id="geogebra_loading"><p>Please wait for GeoGebra to load...</p></div>
     <div id="geogebra_loaded" hidden="true">
         <p>Let us consider this initial input construction (you may freely edit the construction
-           or upload another one as well; only the visible points will be observed):</p>
+            or upload another one as well; only the visible points will be observed):</p>
     </div>
 
     <div id="applet_container"></div>
     <div id="select_relations" hidden="true">
         <p>Select relations to check:<br>
-        <select id="relations" multiple>
-        <option value="3-AreCollinear-%3$s∈%1$s%2$s" selected>Collinearity of three points</option>
-        <option value="22-AreCongruent-%1$s%2$s=%3$s%4$s" selected>Equality of distances between two points</option>
-        <option value="22-ArePerpendicular-%1$s%2$s⟂%3$s%4$s">Perpendicularity of segments defined by two points</option>
-        <option value="22-AreParallel-%1$s%2$s∥%3$s%4$s">Parallelism of segments defined by two points</option>
-    </select>
-    </p>
+            <select id="relations" multiple>
+                <option value="3-AreCollinear-%3$s∈%1$s%2$s" selected>Collinearity of three points</option>
+                <option value="22-AreCongruent-%1$s%2$s=%3$s%4$s" selected>Equality of distances between two points
+                </option>
+                <option value="22-ArePerpendicular-%1$s%2$s⟂%3$s%4$s">Perpendicularity of segments defined by two
+                    points
+                </option>
+                <option value="22-AreParallel-%1$s%2$s∥%3$s%4$s">Parallelism of segments defined by two points</option>
+            </select>
+        </p>
     </div>
     <button id="start_stop" type="button" onclick="start_stop_button()" hidden="true">Start discovery</button>
 
     <div id="results" hidden="true">
-       <p>Now the following theorems can be obtained<span id="processed"></span>:<br><ol><div id="outputbox"
-           style="-webkit-column-count:10;-moz-column-count:10;column-count:10;list-style-position:inside;"></div></ol></p>
-       <p><div id="final_info"></div></p>
+        <p>Now the following theorems can be obtained<span id="processed"></span>:<br>
+        <ol>
+            <div id="outputbox"
+                 style="-webkit-column-count:10;-moz-column-count:10;column-count:10;list-style-position:inside;"></div>
+        </ol>
+        </p>
+        <p>
+        <div id="final_info"></div>
+        </p>
     </div>
 
 </div>
@@ -124,11 +133,11 @@
         var outputbox = document.getElementById('outputbox');
         outputbox.innerHTML += message;
         outputbox.scrollTop = 99999;
-        window.scrollTo(0,document.body.scrollHeight);
+        window.scrollTo(0, document.body.scrollHeight);
         var processed = document.getElementById('processed');
         var percent = Math.floor(cases / all_cases * 100);
-        processed.innerHTML = " (" + cases + "/" + all_cases +" processed, " + percent + "%)";
-        }
+        processed.innerHTML = " (" + cases + "/" + all_cases + " processed, " + percent + "%)";
+    }
 
     function getElapsedTime() {
         var endTime = new Date();
@@ -146,37 +155,37 @@
         var buttontext = "Pause computations";
         if (!running) {
             running = true;
-            } else {
+        } else {
             running = false;
             buttontext = "Continue computations";
-            }
+        }
         var element = document.getElementById('start_stop');
         element.innerHTML = buttontext;
-        }
+    }
 
     function getSelectValues(select) {
         var result = [];
         var options = select && select.options;
         var opt;
-        for (var i=0, iLen=options.length; i<iLen; i++) {
+        for (var i = 0, iLen = options.length; i < iLen; i++) {
             opt = options[i];
             if (opt.selected) {
-               result.push(opt.value || opt.text);
-               }
+                result.push(opt.value || opt.text);
             }
-        return result;
         }
+        return result;
+    }
 
     function endMessage(text) {
         var final_info = document.getElementById('final_info');
         final_info.innerHTML = "<p>" + text + ", found " + found + " theorems among " + cases + " possible statements.<br>"
-                + getElapsedTime() + "</p>";
+            + getElapsedTime() + "</p>";
         final_info.innerHTML += "<p>Please reload the page if you want to start a new experiment.</p>";
         final_info.scrollTop = 1000;
-        window.scrollTo(0,document.body.scrollHeight);
+        window.scrollTo(0, document.body.scrollHeight);
 
         button.hidden = true;
-        }
+    }
 
 
     function stopApplication(statement) {
@@ -186,7 +195,7 @@
             "\nPlease try to use easier inputs to avoid such situations." +
             "\nAlternatively, you may try the same input on a better machine.");
         throw("GeoGebra crashed");
-        }
+    }
 
     async function go_heavy(object) {
         // 6. This is called when the dummy object has been updated
@@ -205,7 +214,7 @@
             button.hidden = false;
             while (!running) {
                 await sleep(300);
-                }
+            }
             var results = document.getElementById('results');
             results.hidden = false;
 
@@ -218,8 +227,8 @@
             for (var i = 0; i < all_points.length; ++i) {
                 if (gA.getVisible(all_points[i])) {
                     points.push(all_points[i]);
-                    }
                 }
+            }
 
             point_triplets = k_combinations(points, 3);
             point_tuples = k_combinations(points, 2);
@@ -233,11 +242,11 @@
                 selected_relations_details.push(selected_relations[i].split("-"));
                 if (selected_relations_details[i][0] == "3") {
                     all_cases += point_triplets.length;
-                    }
+                }
                 if (selected_relations_details[i][0] == "22") {
                     all_cases += segment_tuples.length;
-                    }
                 }
+            }
             relations.disabled = true;
 
             // A. COLLINEAR TRIPLETS
@@ -249,34 +258,34 @@
                     var statement_text = selected_relations_details[r][2];
 
                     for (var i = 0; i < point_triplets.length; ++i, ++cases) {
-                        var A=point_triplets[i][0];
-                        var B=point_triplets[i][1];
-                        var C=point_triplets[i][2];
+                        var A = point_triplets[i][0];
+                        var B = point_triplets[i][1];
+                        var C = point_triplets[i][2];
                         var statement = statement_start + "(" + A + "," + B + "," + C + ")";
-                        gA.evalCommand("pd=ProveDetails("+statement+")");
+                        gA.evalCommand("pd=ProveDetails(" + statement + ")");
                         var result = gA.getValueString("pd");
                         var text = sprintf(statement_text, A, B, C);
                         if (result == "") {
                             stopApplication(text);
-                            }
+                        }
                         if (result.includes("true")) {
                             found++;
                             await sleep(1);
                             if (result.includes('“c”}')) {
                                 text = '<span style="color:red">' + text + '</span>';
-                                }
-                            output("<li>" + text + "</li>");
                             }
+                            output("<li>" + text + "</li>");
+                        }
                         while (!running) {
                             await sleep(300);
-                            }
                         }
                     }
                 }
+            }
 
             var colorMap = {};
             colorFound = 0;
-            var colors = [ 0x1f77b4, 0xaec7e8, 0xff7f0e, 0xffbb78, 0x2ca02c,
+            var colors = [0x1f77b4, 0xaec7e8, 0xff7f0e, 0xffbb78, 0x2ca02c,
                 0x98df8a, 0xd62728, 0xff9896, 0x9467bd, 0xc5b0d5,
                 0x8c564b, 0xc49c94, 0xe377c2, 0xf7b6d2, 0x7f7f7f,
                 0xc7c7c7, 0xbcbd22, 0xdbdb8d, 0x17becf, 0x9edae5];
@@ -288,10 +297,10 @@
                     var statement_start = selected_relations_details[r][1];
                     var statement_text = selected_relations_details[r][2];
                     for (var i = 0; i < segment_tuples.length; ++i, ++cases) {
-                        var A=segment_tuples[i][0][0];
-                        var B=segment_tuples[i][0][1];
-                        var C=segment_tuples[i][1][0];
-                        var D=segment_tuples[i][1][1];
+                        var A = segment_tuples[i][0][0];
+                        var B = segment_tuples[i][0][1];
+                        var C = segment_tuples[i][1][0];
+                        var D = segment_tuples[i][1][1];
                         var segAB = "s_{" + A + "," + B + "}";
                         var segCD = "s_{" + C + "," + D + "}";
                         if (!(gA.getValue(segAB) > 0)) {
@@ -304,13 +313,13 @@
                             gA.setLabelVisible(segCD, false);
                             gA.setVisible(segCD, false);
                         }
-                        var statement = statement_start + "("+segAB+","+segCD+")";
-                        gA.evalCommand("pd=ProveDetails("+statement+")");
+                        var statement = statement_start + "(" + segAB + "," + segCD + ")";
+                        gA.evalCommand("pd=ProveDetails(" + statement + ")");
                         var result = gA.getValueString("pd");
                         var text = sprintf(statement_text, A, B, C, D);
                         if (result == "") {
                             stopApplication(text);
-                            }
+                        }
                         gA.deleteObject("a"); // this will implicitly delete pd as well
                         gA.deleteObject("b");
                         if (result.includes("true")) {
@@ -335,7 +344,7 @@
                                     gA.setColor(segCD, col >> 16, (col >> 8) & 255, col & 255);
                                     // gA.evalCommand("SetDecoration(" + segAB + ",1)");
                                     // gA.evalCommand("SetDecoration(" + segCD + ",1)");
-                                    }
+                                }
                                 /*
                                 if (statement_start == "ArePerpendicular") {
                                     var aABCD = "a_{" + A + "," + B + "," + C + "," + D + "}";
@@ -362,17 +371,17 @@
                                     gA.setColor(lCD, col >> 16, (col >> 8) & 255, col & 255);
                                     gA.setLineThickness(lAB, 1);
                                     gA.setLineThickness(lCD, 1);
-                                    }
                                 }
                             }
+                        }
                         while (!running) {
                             await sleep(300);
-                            }
                         }
                     }
+                }
                 // delete pd
                 gA.deleteObject("pd");
-                }
+            }
 
             var processed = document.getElementById('processed');
             processed.innerHTML = "";
