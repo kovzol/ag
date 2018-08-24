@@ -357,18 +357,19 @@
                     var statement_start = selected_relations_details[r][1];
                     var statement_text = selected_relations_details[r][2];
                     for (var i = 0; i < segment_tuples.length; ++i, ++cases) {
+                        console.log("Case #" + cases);
                         var A = segment_tuples[i][0][0];
                         var B = segment_tuples[i][0][1];
                         var C = segment_tuples[i][1][0];
                         var D = segment_tuples[i][1][1];
                         var segAB = "s_{" + A + "," + B + "}";
                         var segCD = "s_{" + C + "," + D + "}";
-                        if (!(gA.getValue(segAB) > 0)) {
+                        if (!(gA.exists(segAB))) {
                             gA.evalCommand(segAB + "=Segment(" + A + "," + B + ")");
                             gA.setLabelVisible(segAB, false);
                             gA.setVisible(segAB, false);
                         }
-                        if (!(gA.getValue(segCD) > 0)) {
+                        if (!(gA.exists(segCD))) {
                             gA.evalCommand(segCD + "=Segment(" + C + "," + D + ")");
                             gA.setLabelVisible(segCD, false);
                             gA.setVisible(segCD, false);
@@ -380,8 +381,6 @@
                         if (result == "") {
                             stopApplication(text);
                         }
-                        gA.deleteObject("a"); // this will implicitly delete pd as well
-                        gA.deleteObject("b");
                         if (result.includes("true")) {
                             found++;
                             await sleep(1);
