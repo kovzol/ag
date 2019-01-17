@@ -7,7 +7,8 @@ systematically discovers such theorems.
 
 Our present work, similarly to the abovementioned one, has its background in Wu's algebraic
 method, but, by contrast, it has a widely disseminated dynamic geometry engine, [GeoGebra](http://www.geogebra.org). In our work
-a geometric construction can be opened in a [web page](http://htmlpreview.github.io/?https://github.com/kovzol/ag/blob/master/automated-geometer.html), and can be investigated on having
+a geometric construction can be opened in a [web page](http://htmlpreview.github.io/?https://github.com/kovzol/ag/blob/master/automated-geometer.html)
+(try [this page](http://prover-test.geogebra.org/~kovzol/ag/automated-geometer.html) or [its offline variant](http://prover-test.geogebra.org/~kovzol/ag/automated-geometer.html?offline=1) if the first link does not work), and can be investigated on having
 usual relations like collinear points, parallel or perpendicular lines, isosceles triangles,
 and so on, automatically. The relations to observe can be fine-tuned by the user, to avoid explosion of combinatorial complexity. On the other hand, the input construction can be extended by a configurable set
 of newly added objects to obtain a wider set of possible results.
