@@ -111,15 +111,19 @@
 
         parameters.appletOnLoad = function (api) {
             // This code will run after the applet has been injected.
+            gA = ggbApplet;
             var element = document.getElementById('geogebra_loading');
-            element.hidden = true;
+            var version = gA.getVersion();
+            if (offline) {
+                version += " (offline)";
+                }
+            element.innerHTML = 'Using GeoGebra ' + version + '. ';
             var element = document.getElementById('geogebra_loaded');
             element.hidden = false;
             var element = document.getElementById('select_relations');
             element.hidden = false;
 
             // 3. Create initial objects (this could be done later as well)
-            gA = ggbApplet;
             gA.setPerspective("G");
             gA.setAxesVisible(1, false, false, false);
             gA.setGridVisible(false);
@@ -157,7 +161,7 @@
         var applet = new GGBApplet(parameters, '5.0', 'applet_container');
 
         // Using GeoGebra offline if "offline=1" is given:
-        var offline = getQueryVariable("offline");
+        offline = getQueryVariable("offline");
         if (offline && offline == "1")
             applet.setHTML5Codebase('GeoGebra/HTML5/5.0/web/');
         applet.inject('applet_container');
