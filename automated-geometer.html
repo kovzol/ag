@@ -39,7 +39,7 @@
                 <option value="22-AreParallel-%1$s%2$s∥%3$s%4$s">Parallelism of segments defined by two points</option>
             </select>
         </p>
-        <input type="checkbox" id="conj" checked>Check conjectures numerically</input>
+        <input type="checkbox" id="conj" checked>Check conjectures numerically first</input>
     </div>
     <button id="start_stop" type="button" onclick="start_stop_button()" hidden="true">Start discovery</button>
 
@@ -194,6 +194,8 @@
         var processed = document.getElementById(mode + 'processed');
         var percent = Math.floor(cases / all_cases * 100);
         processed.innerHTML = " (" + cases + "/" + all_cases + " processed, " + percent + "%)";
+        if (mode == "conj_")
+            conjectures[cases] = 1;
     }
 
     function getElapsedTime() {
@@ -357,6 +359,7 @@
             var conj_required = document.getElementById("conj").checked;
             if (conj_required)
                 runstart = 0;
+            conjectures = new Array(all_cases);
 
             for (var run=runstart; run < 2; ++run) {
 
@@ -372,6 +375,13 @@
                 found = 0;
                 startTime = new Date();
 
+                var colorMap = {};
+                colorFound = 0;
+                var colors = [0x1f77b4, 0xaec7e8, 0xff7f0e, 0xffbb78, 0x2ca02c,
+                    0x98df8a, 0xd62728, 0xff9896, 0x9467bd, 0xc5b0d5,
+                    0x8c564b, 0xc49c94, 0xe377c2, 0xf7b6d2, 0x7f7f7f,
+                    0xc7c7c7, 0xbcbd22, 0xdbdb8d, 0x17becf, 0x9edae5];
+
                 // A. COLLINEAR TRIPLETS
 
                 for (var r = 0; r < selected_relations.length; ++r) {
@@ -381,6 +391,9 @@
                         var statement_text = selected_relations_details[r][2];
 
                         for (var i = 0; i < point_triplets.length; ++i, ++cases) {
+                            if (conj_required && mode == "prove_" && conjectures[cases] != 1)
+                                continue;
+                            console.log("Case #" + cases);
                             var A = point_triplets[i][0];
                             var B = point_triplets[i][1];
                             var C = point_triplets[i][2];
@@ -401,8 +414,25 @@
                                 if (result.includes('“c”}')) {
                                     text = '<span style="color:red">' + text + '</span>';
                                     top_appeared = true;
+                                    true_on_parts = true;
                                 }
                                 output(mode, "<li>" + text + "</li>");
+                                if (mode == "prove_" && !true_on_parts) {
+                                    if (statement_start == "AreCollinear") {
+                                        var lAB = "l_{" + A + "," + B + "}";
+                                        var lBC = "l_{" + B + "," + C + "}";
+                                        var lAC = "l_{" + B + "," + C + "}";
+                                        if (!colorMap[lAB] && !colorMap[lAC] && !colorMap[lBC]) {
+                                            colorMap[lAB] = colors[colorFound++];
+                                        }
+                                        var col = colorMap[lAB] || 0xAAAAAA;
+                                        gA.evalCommand(lAB + "=Line(" + A + "," + B + ")");
+                                        gA.setVisible(lAB, true);
+                                        gA.setLabelVisible(lAB, false);
+                                        gA.setColor(lAB, col >> 16, (col >> 8) & 255, col & 255);
+                                        gA.setLineThickness(lAB, 1);
+                                    }
+                                }
                             }
                             while (!running) {
                                 await sleep(300);
@@ -411,13 +441,6 @@
                     }
                 }
 
-                var colorMap = {};
-                colorFound = 0;
-                var colors = [0x1f77b4, 0xaec7e8, 0xff7f0e, 0xffbb78, 0x2ca02c,
-                    0x98df8a, 0xd62728, 0xff9896, 0x9467bd, 0xc5b0d5,
-                    0x8c564b, 0xc49c94, 0xe377c2, 0xf7b6d2, 0x7f7f7f,
-                    0xc7c7c7, 0xbcbd22, 0xdbdb8d, 0x17becf, 0x9edae5];
-
                 // B. SEGMENTS HAVING EQUAL LENGTHS, ETC.
                 for (var r = 0; r < selected_relations.length; ++r) {
 
@@ -425,6 +448,8 @@
                         var statement_start = selected_relations_details[r][1];
                         var statement_text = selected_relations_details[r][2];
                         for (var i = 0; i < segment_tuples.length; ++i, ++cases) {
+                            if (conj_required && mode == "prove_" && conjectures[cases] != 1)
+                                continue
                             console.log("Case #" + cases);
                             var A = segment_tuples[i][0][0];
                             var B = segment_tuples[i][0][1];
