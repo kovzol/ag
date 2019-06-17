@@ -462,7 +462,7 @@
                                     true_on_parts = true;
                                 }
                                 output(mode, "<li>" + text + "</li>");
-                                if (!true_on_parts) {
+                                if (mode == "prove_" && !true_on_parts) {
                                     if (statement_start == "AreCongruent") {
                                         if (!colorMap[segAB]) {
                                             colorMap[segAB] = colors[colorFound++];
@@ -484,7 +484,7 @@
                                         gA.setLabelVisible(aABCD, false);
                                         }
                                     */
-                                    if (statement_start == "AreParallel") {
+                                    if (mode == "prove_" && statement_start == "AreParallel") {
                                         var lAB = "l_{" + A + "," + B + "}";
                                         var lCD = "l_{" + C + "," + D + "}";
                                         if (!colorMap[lAB]) {
