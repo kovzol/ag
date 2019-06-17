@@ -37,6 +37,7 @@
                     points
                 </option>
                 <option value="22-AreParallel-%1$s%2$s∥%3$s%4$s">Parallelism of segments defined by two points</option>
+                <option value="4-AreConcyclic-%4$s∈○%1$s%2$s%3$s" selected>Concyclicity of four points</option>
             </select>
         </p>
         <input type="checkbox" id="conj" checked>Check conjectures numerically first</input>
@@ -337,6 +338,7 @@
             point_triplets = k_combinations(points, 3);
             point_tuples = k_combinations(points, 2);
             segment_tuples = k_combinations(point_tuples, 2);
+            point_quadruplets = k_combinations(points, 4);
 
             all_cases = 0;
             top_appeared = false;
@@ -352,6 +354,9 @@
                 }
                 if (selected_relations_details[i][0] == "22") {
                     all_cases += segment_tuples.length;
+                }
+                if (selected_relations_details[i][0] == "4") {
+                    all_cases += point_quadruplets.length;
                 }
             }
             relations.disabled = true;
@@ -411,6 +416,7 @@
                             if (result.includes("true")) {
                                 found++;
                                 await sleep(1);
+                                true_on_parts = false;
                                 if (result.includes('“c”}')) {
                                     text = '<span style="color:red">' + text + '</span>';
                                     top_appeared = true;
@@ -538,6 +544,68 @@
                     // delete pd
                     gA.deleteObject("pd");
                     gA.setUndoPoint();
+                }
+
+                // C. CONCYCLIC QUADRUPLETS
+
+                for (var r = 0; r < selected_relations.length; ++r) {
+
+                    if (selected_relations_details[r][0] == "4") {
+                        var statement_start = selected_relations_details[r][1];
+                        var statement_text = selected_relations_details[r][2];
+
+                        for (var i = 0; i < point_quadruplets.length; ++i, ++cases) {
+                            if (conj_required && mode == "prove_" && conjectures[cases] != 1)
+                                continue;
+                            console.log("Case #" + cases);
+                            var A = point_quadruplets[i][0];
+                            var B = point_quadruplets[i][1];
+                            var C = point_quadruplets[i][2];
+                            var D = point_quadruplets[i][3];
+                            var statement = statement_start + "(" + A + "," + B + "," + C + "," + D + ")";
+                            if (run == 0)
+                                gA.evalCommand("pd=" + statement + "");
+                            else
+                                gA.evalCommand("pd=ProveDetails(" + statement + ")");
+
+                            var result = gA.getValueString("pd");
+                            var text = sprintf(statement_text, A, B, C, D);
+                            if (result == "") {
+                                stopApplication(mode, text);
+                            }
+                            if (result.includes("true")) {
+                                found++;
+                                await sleep(1);
+                                true_on_parts = false;
+                                if (result.includes('“c”}')) {
+                                    text = '<span style="color:red">' + text + '</span>';
+                                    top_appeared = true;
+                                    true_on_parts = true;
+                                }
+                                output(mode, "<li>" + text + "</li>");
+                                if (mode == "prove_" && !true_on_parts) {
+                                    if (statement_start == "AreConcyclic") {
+                                        var cABC = "c_{" + A + "," + B + "," + C + "}";
+                                        var cBCD = "c_{" + B + "," + C + "," + D + "}";
+                                        var cACD = "c_{" + A + "," + C + "," + D + "}";
+                                        var cABD = "c_{" + A + "," + B + "," + D + "}";
+                                        if (!colorMap[cABC] && !colorMap[cBCD] && !colorMap[cACD] && !colorMap[cABD]) {
+                                            colorMap[cABC] = colors[colorFound++];
+                                        }
+                                        var col = colorMap[cABC] || 0xAAAAAA;
+                                        gA.evalCommand(cABC + "=Circle(" + A + "," + B + "," + C + ")");
+                                        gA.setVisible(cABC, true);
+                                        gA.setLabelVisible(cABC, false);
+                                        gA.setColor(cABC, col >> 16, (col >> 8) & 255, col & 255);
+                                        gA.setLineThickness(cABC, 1);
+                                    }
+                                }
+                            }
+                            while (!running) {
+                                await sleep(300);
+                            }
+                        }
+                    }
                 }
 
                 var processed = document.getElementById(mode + 'processed');
