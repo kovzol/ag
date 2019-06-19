@@ -29,7 +29,7 @@
     <div id="applet_container"></div>
     <div id="select_relations" hidden="true">
         <p>Select relations to check:<br>
-            <select id="relations" multiple>
+            <select id="relations" size="5" multiple>
                 <option value="3-AreCollinear-%3$s∈%1$s%2$s" selected>Collinearity of three points</option>
                 <option value="22-AreCongruent-%1$s%2$s=%3$s%4$s" selected>Equality of distances between two points
                 </option>
@@ -40,31 +40,18 @@
                 <option value="4-AreConcyclic-%4$s∈○%1$s%2$s%3$s" selected>Concyclicity of four points</option>
             </select>
         </p>
-        <input type="checkbox" id="conj" checked>Check conjectures numerically first</input>
     </div>
     <button id="start_stop" type="button" onclick="start_stop_button()" hidden="true">Start discovery</button>
 
-    <div id="conj_results" hidden="true">
-        <p>Now the following theorems can be conjectured<span id="conj_processed"></span>:<br>
+    <div id="results" hidden="true">
+        <p>The following theorems can be proven<span id="processed"></span>:<br>
         <ol>
-            <div id="conj_outputbox"
+            <div id="outputbox"
                  style="-webkit-column-count:10;-moz-column-count:10;column-count:10;list-style-position:inside;"></div>
         </ol>
         </p>
         <p>
-        <div id="conj_final_info"></div>
-        </p>
-    </div>
-
-    <div id="prove_results" hidden="true">
-        <p>The following theorems can be proven<span id="prove_processed"></span>:<br>
-        <ol>
-            <div id="prove_outputbox"
-                 style="-webkit-column-count:10;-moz-column-count:10;column-count:10;list-style-position:inside;"></div>
-        </ol>
-        </p>
-        <p>
-        <div id="prove_final_info"></div>
+        <div id="final_info"></div>
         </p>
     </div>
     <button id="restart" hidden="true" type="button" onclick="restart()">Restart with a new or the same experiment</button>
@@ -187,16 +174,14 @@
         return new Promise(resolve => setTimeout(resolve, ms));
     }
 
-    function output(mode, message) {
-        var outputbox = document.getElementById(mode + 'outputbox');
+    function output(message) {
+        var outputbox = document.getElementById('outputbox');
         outputbox.innerHTML += message;
         outputbox.scrollTop = 99999;
         window.scrollTo(0, document.body.scrollHeight);
-        var processed = document.getElementById(mode + 'processed');
+        var processed = document.getElementById('processed');
         var percent = Math.floor(cases / all_cases * 100);
         processed.innerHTML = " (" + cases + "/" + all_cases + " processed, " + percent + "%)";
-        if (mode == "conj_")
-            conjectures[cases] = 1;
     }
 
     function getElapsedTime() {
@@ -239,32 +224,26 @@
         return result;
     }
 
-    function endMessage(mode, text) {
-        var final_info = document.getElementById(mode + 'final_info');
+    function endMessage(text) {
+        var final_info = document.getElementById('final_info');
         var top_text = "";
-        var objects = "theorems";
-        if (mode == "conj_") {
-            objects = "conjectures";
-        }
         if (top_appeared) {
-            top_text = "<span style=\"color:red\">Found " + objects + " that are true only on parts.</span><br>";
+            top_text = "<span style=\"color:red\">Found theorems that are true only on parts.</span><br>";
         }
 
-        final_info.innerHTML = "<p>" + text + ", found " + found + " " + objects + " among " + cases + " possible statements.<br>"
+        final_info.innerHTML = "<p>" + text + ", found " + found + " theorems among " + cases + " possible statements.<br>"
             + top_text + getElapsedTime() + "</p>";
         final_info.scrollTop = 1000;
         window.scrollTo(0, document.body.scrollHeight);
 
-        if (mode == "prove_") {
-            button.hidden = true;
-            var restart_button = document.getElementById('restart');
-            restart_button.hidden = false;
-            }
+        button.hidden = true;
+        var restart_button = document.getElementById('restart');
+        restart_button.hidden = false;
     }
 
 
-    function stopApplication(mode, statement) {
-        endMessage(mode, "Crashed on checking " + statement);
+    function stopApplication(statement) {
+        endMessage("Crashed on checking " + statement);
 
         alert("Sorry, GeoGebra seems to be crashed.\nWe cannot continue from this point." +
             "\nPlease try to use easier inputs to avoid such situations." +
@@ -276,20 +255,14 @@
         gA.setBase64(problem);
         relations.disabled = false;
         running = false;
-        var prove_final_info = document.getElementById('prove_final_info');
-        prove_final_info.innerHTML = "";
-        var conj_final_info = document.getElementById('conj_final_info');
-        conj_final_info.innerHTML = "";
+        var final_info = document.getElementById('final_info');
+        final_info.innerHTML = "";
         var element = document.getElementById('start_stop');
         element.innerHTML = "Start computations";
-        var prover_outputbox = document.getElementById('prove_outputbox');
-        prove_outputbox.innerHTML = "";
-        var conj_outputbox = document.getElementById('conj_outputbox');
-        conj_outputbox.innerHTML = "";
-        var prove_results = document.getElementById('prove_results');
-        prove_results.hidden = true;
-        var conj_results = document.getElementById('conj_results');
-        conj_results.hidden = true;
+        var outputbox = document.getElementById('outputbox');
+        outputbox.innerHTML = "";
+        var results = document.getElementById('results');
+        results.hidden = true;
         var restart_button = document.getElementById('restart');
         restart_button.hidden = true;
         var examples = document.getElementById('examples');
@@ -360,259 +333,241 @@
                 }
             }
             relations.disabled = true;
-            var runstart = 1;
-            var conj_required = document.getElementById("conj").checked;
-            if (conj_required)
-                runstart = 0;
-            conjectures = new Array(all_cases);
 
-            for (var run=runstart; run < 2; ++run) {
+            var results = document.getElementById('results');
+            results.hidden = false;
 
-                if (run==0)
-                    mode = "conj_";
-                else
-                    mode = "prove_";
+            cases = 0;
+            found = 0;
+            startTime = new Date();
 
-                var results = document.getElementById(mode + 'results');
-                results.hidden = false;
+            var colorMap = {};
+            colorFound = 0;
+            var colors = [0x1f77b4, 0xaec7e8, 0xff7f0e, 0xffbb78, 0x2ca02c,
+                0x98df8a, 0xd62728, 0xff9896, 0x9467bd, 0xc5b0d5,
+                0x8c564b, 0xc49c94, 0xe377c2, 0xf7b6d2, 0x7f7f7f,
+                0xc7c7c7, 0xbcbd22, 0xdbdb8d, 0x17becf, 0x9edae5];
 
-                cases = 0;
-                found = 0;
-                startTime = new Date();
+            // A. COLLINEAR TRIPLETS
 
-                var colorMap = {};
-                colorFound = 0;
-                var colors = [0x1f77b4, 0xaec7e8, 0xff7f0e, 0xffbb78, 0x2ca02c,
-                    0x98df8a, 0xd62728, 0xff9896, 0x9467bd, 0xc5b0d5,
-                    0x8c564b, 0xc49c94, 0xe377c2, 0xf7b6d2, 0x7f7f7f,
-                    0xc7c7c7, 0xbcbd22, 0xdbdb8d, 0x17becf, 0x9edae5];
+            for (var r = 0; r < selected_relations.length; ++r) {
 
-                // A. COLLINEAR TRIPLETS
+                if (selected_relations_details[r][0] == "3") {
+                    var statement_start = selected_relations_details[r][1];
+                    var statement_text = selected_relations_details[r][2];
 
-                for (var r = 0; r < selected_relations.length; ++r) {
-
-                    if (selected_relations_details[r][0] == "3") {
-                        var statement_start = selected_relations_details[r][1];
-                        var statement_text = selected_relations_details[r][2];
-
-                        for (var i = 0; i < point_triplets.length; ++i, ++cases) {
-                            if (conj_required && mode == "prove_" && conjectures[cases] != 1)
-                                continue;
-                            console.log("Case #" + cases);
-                            var A = point_triplets[i][0];
-                            var B = point_triplets[i][1];
-                            var C = point_triplets[i][2];
-                            var statement = statement_start + "(" + A + "," + B + "," + C + ")";
-                            if (run == 0)
-                                gA.evalCommand("pd=" + statement + "");
-                            else
-                                gA.evalCommand("pd=ProveDetails(" + statement + ")");
-
-                            var result = gA.getValueString("pd");
-                            var text = sprintf(statement_text, A, B, C);
-                            if (result == "") {
-                                stopApplication(mode, text);
+                    for (var i = 0; i < point_triplets.length; ++i, ++cases) {
+                        console.log("Case #" + cases);
+                        var A = point_triplets[i][0];
+                        var B = point_triplets[i][1];
+                        var C = point_triplets[i][2];
+                        var statement = statement_start + "(" + A + "," + B + "," + C + ")";
+                        gA.evalCommand("pd=" + statement + "");
+                        var result = gA.getValueString("pd");
+                        if (!result.includes("true"))
+                            continue;
+                        gA.evalCommand("pd=ProveDetails(" + statement + ")");
+                        var result = gA.getValueString("pd");
+                        var text = sprintf(statement_text, A, B, C);
+                        if (result == "") {
+                            stopApplication(text);
+                        }
+                        if (result.includes("true")) {
+                            found++;
+                            await sleep(1);
+                            true_on_parts = false;
+                            if (result.includes('“c”}')) {
+                                text = '<span style="color:red">' + text + '</span>';
+                                top_appeared = true;
+                                true_on_parts = true;
                             }
-                            if (result.includes("true")) {
-                                found++;
-                                await sleep(1);
-                                true_on_parts = false;
-                                if (result.includes('“c”}')) {
-                                    text = '<span style="color:red">' + text + '</span>';
-                                    top_appeared = true;
-                                    true_on_parts = true;
-                                }
-                                output(mode, "<li>" + text + "</li>");
-                                if (mode == "prove_" && !true_on_parts) {
-                                    if (statement_start == "AreCollinear") {
-                                        var lAB = "l_{" + A + "," + B + "}";
-                                        var lBC = "l_{" + B + "," + C + "}";
-                                        var lAC = "l_{" + B + "," + C + "}";
-                                        if (!colorMap[lAB] && !colorMap[lAC] && !colorMap[lBC]) {
-                                            colorMap[lAB] = colors[colorFound++];
-                                        }
-                                        var col = colorMap[lAB] || 0xAAAAAA;
-                                        gA.evalCommand(lAB + "=Line(" + A + "," + B + ")");
-                                        gA.setVisible(lAB, true);
-                                        gA.setLabelVisible(lAB, false);
-                                        gA.setColor(lAB, col >> 16, (col >> 8) & 255, col & 255);
-                                        gA.setLineThickness(lAB, 1);
+                            output("<li>" + text + "</li>");
+                            if (!true_on_parts) {
+                                if (statement_start == "AreCollinear") {
+                                    var lAB = "l_{" + A + "," + B + "}";
+                                    var lBC = "l_{" + B + "," + C + "}";
+                                    var lAC = "l_{" + B + "," + C + "}";
+                                    if (!colorMap[lAB] && !colorMap[lAC] && !colorMap[lBC]) {
+                                        colorMap[lAB] = colors[colorFound++];
                                     }
+                                    var col = colorMap[lAB] || 0xAAAAAA;
+                                    gA.evalCommand(lAB + "=Line(" + A + "," + B + ")");
+                                    gA.setVisible(lAB, true);
+                                    gA.setLabelVisible(lAB, false);
+                                    gA.setColor(lAB, col >> 16, (col >> 8) & 255, col & 255);
+                                    gA.setLineThickness(lAB, 1);
                                 }
                             }
-                            while (!running) {
-                                await sleep(300);
+                        }
+                        while (!running) {
+                            await sleep(300);
+                        }
+                    }
+                }
+            }
+
+            // B. SEGMENTS HAVING EQUAL LENGTHS, ETC.
+            for (var r = 0; r < selected_relations.length; ++r) {
+
+                if (selected_relations_details[r][0] == "22") {
+                    var statement_start = selected_relations_details[r][1];
+                    var statement_text = selected_relations_details[r][2];
+                    for (var i = 0; i < segment_tuples.length; ++i, ++cases) {
+                        console.log("Case #" + cases);
+                        var A = segment_tuples[i][0][0];
+                        var B = segment_tuples[i][0][1];
+                        var C = segment_tuples[i][1][0];
+                        var D = segment_tuples[i][1][1];
+                        var segAB = "s_{" + A + "," + B + "}";
+                        var segCD = "s_{" + C + "," + D + "}";
+                        if (!(gA.exists(segAB))) {
+                            gA.evalCommand(segAB + "=Segment(" + A + "," + B + ")");
+                            gA.setLabelVisible(segAB, false);
+                            gA.setVisible(segAB, false);
+                        }
+                        if (!(gA.exists(segCD))) {
+                            gA.evalCommand(segCD + "=Segment(" + C + "," + D + ")");
+                            gA.setLabelVisible(segCD, false);
+                            gA.setVisible(segCD, false);
+                        }
+                        var statement = statement_start + "(" + segAB + "," + segCD + ")";
+                        gA.evalCommand("pd=" + statement + "");
+                        var result = gA.getValueString("pd");
+                        if (!result.includes("true"))
+                            continue;
+                        gA.evalCommand("pd=ProveDetails(" + statement + ")");
+                        var result = gA.getValueString("pd");
+                        var text = sprintf(statement_text, A, B, C, D);
+                        if (result == "") {
+                            stopApplication(text);
+                        }
+                        if (result.includes("true")) {
+                            found++;
+                            await sleep(1);
+                            true_on_parts = false;
+                            if (result.includes('“c”}')) {
+                                text = '<span style="color:red">' + text + '</span>';
+                                top_appeared = true;
+                                true_on_parts = true;
                             }
+                            output("<li>" + text + "</li>");
+                            if (!true_on_parts) {
+                                if (statement_start == "AreCongruent") {
+                                    if (!colorMap[segAB]) {
+                                        colorMap[segAB] = colors[colorFound++];
+                                    }
+                                    colorMap[segCD] = colorMap[segAB];
+                                    var col = colorMap[segAB] || 0xAAAAAA;
+                                    gA.setVisible(segAB, true);
+                                    gA.setVisible(segCD, true);
+                                    gA.setColor(segAB, col >> 16, (col >> 8) & 255, col & 255);
+                                    gA.setColor(segCD, col >> 16, (col >> 8) & 255, col & 255);
+                                    // gA.evalCommand("SetDecoration(" + segAB + ",1)");
+                                    // gA.evalCommand("SetDecoration(" + segCD + ",1)");
+                                }
+                                /*
+                                if (statement_start == "ArePerpendicular") {
+                                    var aABCD = "a_{" + A + "," + B + "," + C + "," + D + "}";
+                                    gA.evalCommand(aABCD + "=Angle(" + segAB + "," + segCD + ")");
+                                    gA.evalCommand("SetDecoration(" + aABCD + ",1)");
+                                    gA.setLabelVisible(aABCD, false);
+                                    }
+                                */
+                                if (statement_start == "AreParallel") {
+                                    var lAB = "l_{" + A + "," + B + "}";
+                                    var lCD = "l_{" + C + "," + D + "}";
+                                    if (!colorMap[lAB]) {
+                                        colorMap[lAB] = colors[colorFound++];
+                                    }
+                                    colorMap[lCD] = colorMap[lAB];
+                                    var col = colorMap[lAB] || 0xAAAAAA;
+                                    gA.evalCommand(lAB + "=Line(" + A + "," + B + ")");
+                                    gA.evalCommand(lCD + "=Line(" + C + "," + D + ")");
+                                    gA.setVisible(lAB, true);
+                                    gA.setVisible(lCD, true);
+                                    gA.setLabelVisible(lAB, false);
+                                    gA.setLabelVisible(lCD, false);
+                                    gA.setColor(lAB, col >> 16, (col >> 8) & 255, col & 255);
+                                    gA.setColor(lCD, col >> 16, (col >> 8) & 255, col & 255);
+                                    gA.setLineThickness(lAB, 1);
+                                    gA.setLineThickness(lCD, 1);
+                                }
+                            }
+                        }
+                        while (!running) {
+                            await sleep(300);
+                        }
+                    }
+                }
+                // delete pd
+                gA.deleteObject("pd");
+                gA.setUndoPoint();
+            }
+
+            // C. CONCYCLIC QUADRUPLETS
+
+            for (var r = 0; r < selected_relations.length; ++r) {
+
+                if (selected_relations_details[r][0] == "4") {
+                    var statement_start = selected_relations_details[r][1];
+                    var statement_text = selected_relations_details[r][2];
+
+                    for (var i = 0; i < point_quadruplets.length; ++i, ++cases) {
+                        console.log("Case #" + cases);
+                        var A = point_quadruplets[i][0];
+                        var B = point_quadruplets[i][1];
+                        var C = point_quadruplets[i][2];
+                        var D = point_quadruplets[i][3];
+                        var statement = statement_start + "(" + A + "," + B + "," + C + "," + D + ")";
+                        gA.evalCommand("pd=" + statement + "");
+                        var result = gA.getValueString("pd");
+                        if (!result.includes("true"))
+                            continue;
+                        gA.evalCommand("pd=ProveDetails(" + statement + ")");
+                        var result = gA.getValueString("pd");
+                        var text = sprintf(statement_text, A, B, C, D);
+                        if (result == "") {
+                            stopApplication(text);
+                        }
+                        if (result.includes("true")) {
+                            found++;
+                            await sleep(1);
+                            true_on_parts = false;
+                            if (result.includes('“c”}')) {
+                                text = '<span style="color:red">' + text + '</span>';
+                                top_appeared = true;
+                                true_on_parts = true;
+                            }
+                            output("<li>" + text + "</li>");
+                            if (!true_on_parts) {
+                                if (statement_start == "AreConcyclic") {
+                                    var cABC = "c_{" + A + "," + B + "," + C + "}";
+                                    var cBCD = "c_{" + B + "," + C + "," + D + "}";
+                                    var cACD = "c_{" + A + "," + C + "," + D + "}";
+                                    var cABD = "c_{" + A + "," + B + "," + D + "}";
+                                    if (!colorMap[cABC] && !colorMap[cBCD] && !colorMap[cACD] && !colorMap[cABD]) {
+                                        colorMap[cABC] = colors[colorFound++];
+                                    }
+                                    var col = colorMap[cABC] || 0xAAAAAA;
+                                    gA.evalCommand(cABC + "=Circle(" + A + "," + B + "," + C + ")");
+                                    gA.setVisible(cABC, true);
+                                    gA.setLabelVisible(cABC, false);
+                                    gA.setColor(cABC, col >> 16, (col >> 8) & 255, col & 255);
+                                    gA.setLineThickness(cABC, 1);
+                                }
+                            }
+                        }
+                        while (!running) {
+                            await sleep(300);
                         }
                     }
                 }
 
-                // B. SEGMENTS HAVING EQUAL LENGTHS, ETC.
-                for (var r = 0; r < selected_relations.length; ++r) {
-
-                    if (selected_relations_details[r][0] == "22") {
-                        var statement_start = selected_relations_details[r][1];
-                        var statement_text = selected_relations_details[r][2];
-                        for (var i = 0; i < segment_tuples.length; ++i, ++cases) {
-                            if (conj_required && mode == "prove_" && conjectures[cases] != 1)
-                                continue
-                            console.log("Case #" + cases);
-                            var A = segment_tuples[i][0][0];
-                            var B = segment_tuples[i][0][1];
-                            var C = segment_tuples[i][1][0];
-                            var D = segment_tuples[i][1][1];
-                            var segAB = "s_{" + A + "," + B + "}";
-                            var segCD = "s_{" + C + "," + D + "}";
-                            if (!(gA.exists(segAB))) {
-                                gA.evalCommand(segAB + "=Segment(" + A + "," + B + ")");
-                                gA.setLabelVisible(segAB, false);
-                                gA.setVisible(segAB, false);
-                            }
-                            if (!(gA.exists(segCD))) {
-                                gA.evalCommand(segCD + "=Segment(" + C + "," + D + ")");
-                                gA.setLabelVisible(segCD, false);
-                                gA.setVisible(segCD, false);
-                            }
-                            var statement = statement_start + "(" + segAB + "," + segCD + ")";
-                            if (run == 0)
-                                gA.evalCommand("pd=" + statement + "");
-                            else
-                                gA.evalCommand("pd=ProveDetails(" + statement + ")");
-                            var result = gA.getValueString("pd");
-                            var text = sprintf(statement_text, A, B, C, D);
-                            if (result == "") {
-                                stopApplication(text);
-                            }
-                            if (result.includes("true")) {
-                                found++;
-                                await sleep(1);
-                                true_on_parts = false;
-                                if (result.includes('“c”}')) {
-                                    text = '<span style="color:red">' + text + '</span>';
-                                    top_appeared = true;
-                                    true_on_parts = true;
-                                }
-                                output(mode, "<li>" + text + "</li>");
-                                if (mode == "prove_" && !true_on_parts) {
-                                    if (statement_start == "AreCongruent") {
-                                        if (!colorMap[segAB]) {
-                                            colorMap[segAB] = colors[colorFound++];
-                                        }
-                                        colorMap[segCD] = colorMap[segAB];
-                                        var col = colorMap[segAB] || 0xAAAAAA;
-                                        gA.setVisible(segAB, true);
-                                        gA.setVisible(segCD, true);
-                                        gA.setColor(segAB, col >> 16, (col >> 8) & 255, col & 255);
-                                        gA.setColor(segCD, col >> 16, (col >> 8) & 255, col & 255);
-                                        // gA.evalCommand("SetDecoration(" + segAB + ",1)");
-                                        // gA.evalCommand("SetDecoration(" + segCD + ",1)");
-                                    }
-                                    /*
-                                    if (statement_start == "ArePerpendicular") {
-                                        var aABCD = "a_{" + A + "," + B + "," + C + "," + D + "}";
-                                        gA.evalCommand(aABCD + "=Angle(" + segAB + "," + segCD + ")");
-                                        gA.evalCommand("SetDecoration(" + aABCD + ",1)");
-                                        gA.setLabelVisible(aABCD, false);
-                                        }
-                                    */
-                                    if (mode == "prove_" && statement_start == "AreParallel") {
-                                        var lAB = "l_{" + A + "," + B + "}";
-                                        var lCD = "l_{" + C + "," + D + "}";
-                                        if (!colorMap[lAB]) {
-                                            colorMap[lAB] = colors[colorFound++];
-                                        }
-                                        colorMap[lCD] = colorMap[lAB];
-                                        var col = colorMap[lAB] || 0xAAAAAA;
-                                        gA.evalCommand(lAB + "=Line(" + A + "," + B + ")");
-                                        gA.evalCommand(lCD + "=Line(" + C + "," + D + ")");
-                                        gA.setVisible(lAB, true);
-                                        gA.setVisible(lCD, true);
-                                        gA.setLabelVisible(lAB, false);
-                                        gA.setLabelVisible(lCD, false);
-                                        gA.setColor(lAB, col >> 16, (col >> 8) & 255, col & 255);
-                                        gA.setColor(lCD, col >> 16, (col >> 8) & 255, col & 255);
-                                        gA.setLineThickness(lAB, 1);
-                                        gA.setLineThickness(lCD, 1);
-                                    }
-                                }
-                            }
-                            while (!running) {
-                                await sleep(300);
-                            }
-                        }
-                    }
-                    // delete pd
-                    gA.deleteObject("pd");
-                    gA.setUndoPoint();
-                }
-
-                // C. CONCYCLIC QUADRUPLETS
-
-                for (var r = 0; r < selected_relations.length; ++r) {
-
-                    if (selected_relations_details[r][0] == "4") {
-                        var statement_start = selected_relations_details[r][1];
-                        var statement_text = selected_relations_details[r][2];
-
-                        for (var i = 0; i < point_quadruplets.length; ++i, ++cases) {
-                            if (conj_required && mode == "prove_" && conjectures[cases] != 1)
-                                continue;
-                            console.log("Case #" + cases);
-                            var A = point_quadruplets[i][0];
-                            var B = point_quadruplets[i][1];
-                            var C = point_quadruplets[i][2];
-                            var D = point_quadruplets[i][3];
-                            var statement = statement_start + "(" + A + "," + B + "," + C + "," + D + ")";
-                            if (run == 0)
-                                gA.evalCommand("pd=" + statement + "");
-                            else
-                                gA.evalCommand("pd=ProveDetails(" + statement + ")");
-
-                            var result = gA.getValueString("pd");
-                            var text = sprintf(statement_text, A, B, C, D);
-                            if (result == "") {
-                                stopApplication(mode, text);
-                            }
-                            if (result.includes("true")) {
-                                found++;
-                                await sleep(1);
-                                true_on_parts = false;
-                                if (result.includes('“c”}')) {
-                                    text = '<span style="color:red">' + text + '</span>';
-                                    top_appeared = true;
-                                    true_on_parts = true;
-                                }
-                                output(mode, "<li>" + text + "</li>");
-                                if (mode == "prove_" && !true_on_parts) {
-                                    if (statement_start == "AreConcyclic") {
-                                        var cABC = "c_{" + A + "," + B + "," + C + "}";
-                                        var cBCD = "c_{" + B + "," + C + "," + D + "}";
-                                        var cACD = "c_{" + A + "," + C + "," + D + "}";
-                                        var cABD = "c_{" + A + "," + B + "," + D + "}";
-                                        if (!colorMap[cABC] && !colorMap[cBCD] && !colorMap[cACD] && !colorMap[cABD]) {
-                                            colorMap[cABC] = colors[colorFound++];
-                                        }
-                                        var col = colorMap[cABC] || 0xAAAAAA;
-                                        gA.evalCommand(cABC + "=Circle(" + A + "," + B + "," + C + ")");
-                                        gA.setVisible(cABC, true);
-                                        gA.setLabelVisible(cABC, false);
-                                        gA.setColor(cABC, col >> 16, (col >> 8) & 255, col & 255);
-                                        gA.setLineThickness(cABC, 1);
-                                    }
-                                }
-                            }
-                            while (!running) {
-                                await sleep(300);
-                            }
-                        }
-                    }
-                }
-
-                var processed = document.getElementById(mode + 'processed');
+                var processed = document.getElementById('processed');
                 processed.innerHTML = "";
 
                 // FINAL REPORT
-                endMessage(mode, "Finished");
+                endMessage("Finished");
             }
         }
     }
