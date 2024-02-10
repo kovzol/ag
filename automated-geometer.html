@@ -287,6 +287,12 @@
 
             button = document.getElementById('start_stop');
             button.hidden = false;
+
+            // For some strange reason, two extra objects are created.
+            // We need to delete them manually:
+            gA.deleteObject("Net");
+            gA.deleteObject("Quadric");
+
             while (!running) {
                 await sleep(300);
             }
