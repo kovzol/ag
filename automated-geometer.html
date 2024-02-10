@@ -167,6 +167,8 @@
         offline = getQueryVariable("offline");
         if (offline && offline == "1")
             applet.setHTML5Codebase('GeoGebra/HTML5/5.0/web/');
+        else
+            applet.setHTML5Codebase('https://www.geogebra.org/apps/latest/web3d/');
         applet.inject('applet_container');
     }
 
