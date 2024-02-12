@@ -167,7 +167,7 @@
         offline = getQueryVariable("offline");
         if (offline && offline == "1")
             applet.setHTML5Codebase('GeoGebra/HTML5/5.0/web/');
-        else
+        else 
             applet.setHTML5Codebase('https://www.geogebra.org/apps/latest/web3d/');
         applet.inject('applet_container');
     }
@@ -384,7 +384,7 @@
                             found++;
                             await sleep(1);
                             true_on_parts = false;
-                            if (result.includes('“c”}')) {
+                            if (result.includes('“c”}') || result.includes('"c"}')) {
                                 text = '<span style="color:red">' + text + '</span>';
                                 top_appeared = true;
                                 true_on_parts = true;
@@ -453,7 +453,7 @@
                             found++;
                             await sleep(1);
                             true_on_parts = false;
-                            if (result.includes('“c”}')) {
+                            if (result.includes('“c”}') || result.includes('"c"}')) {
                                 text = '<span style="color:red">' + text + '</span>';
                                 top_appeared = true;
                                 true_on_parts = true;
@@ -541,7 +541,7 @@
                             found++;
                             await sleep(1);
                             true_on_parts = false;
-                            if (result.includes('“c”}')) {
+                            if (result.includes('“c”}') || result.includes('"c"}')) {
                                 text = '<span style="color:red">' + text + '</span>';
                                 top_appeared = true;
                                 true_on_parts = true;
