@@ -64,6 +64,11 @@
 
 <script type='text/javascript'>
 
+    "use strict";
+
+    var running, demo_regular_hexagon, demo_thales, demo_thales2, demo_9p_circle, demo_7circles, offline, gA, button, problem,
+        point_triplets, point_tuples, segment_tuples, point_quadruplets, all_cases, top_appeared, relations, cases, found, startTime, colorFound, true_on_parts;
+
     function demos() {
         demo_regular_hexagon = "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";
         demo_thales = "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";
@@ -76,7 +81,7 @@
     function getQueryVariable(variable) {
         var query = window.location.search.substring(1);
         var vars = query.split('&');
-        for (var i = 0; i < vars.length; i++) {
+        for (let i = 0; i < vars.length; i++) {
             var pair = vars[i].split("=");
             if (pair[0] == variable) {
                 return pair[1];
@@ -167,7 +172,9 @@
         offline = getQueryVariable("offline");
         if (offline && offline == "1")
             applet.setHTML5Codebase('GeoGebra/HTML5/5.0/web/');
-        else 
+        else if (offline && offline == "2")
+            applet.setHTML5Codebase('../web3d/');
+        else
             applet.setHTML5Codebase('https://www.geogebra.org/apps/latest/web3d/');
         applet.inject('applet_container');
     }
@@ -217,7 +224,7 @@
         var result = [];
         var options = select && select.options;
         var opt;
-        for (var i = 0, iLen = options.length; i < iLen; i++) {
+        for (let i = 0, iLen = options.length; i < iLen; i++) {
             opt = options[i];
             if (opt.selected) {
                 result.push(opt.value || opt.text);
@@ -271,14 +278,17 @@
         examples.hidden = false;
         var you_may_edit = document.getElementById('you_may_edit');
         you_may_edit.hidden = false;
-        go_heavy("dummy");
+        go_heavy("restart");
     }
+
+    var allowed_object = "dummy";
 
     async function go_heavy(object) {
         // 6. This is called when the dummy object has been updated
         // on completion of the dummy computation.
-        if (object == "dummy") {
-            // 7. Remove this listener to avoid re-launching this code.
+        if (object == allowed_object) {
+            // 7. Remove the "dummy" listener to avoid re-launching this code.
+            allowed_object = "restart"; // In GeoGebra Discovery, the update listener is sometimes not removed. This is a workaround.
             // Also remove dummy object.
             gA.unregisterUpdateListener("go_heavy");
             gA.deleteObject("dummy");
@@ -310,7 +320,7 @@
 
             var all_points = gA.getAllObjectNames("point");
             var points = [];
-            for (var i = 0; i < all_points.length; ++i) {
+            for (let i = 0; i < all_points.length; ++i) {
                 if (gA.getVisible(all_points[i])) {
                     points.push(all_points[i]);
                 }
@@ -328,7 +338,7 @@
             var selected_relations_details = [];
 
 
-            for (var i = 0; i < selected_relations.length; ++i) {
+            for (let i = 0; i < selected_relations.length; ++i) {
                 selected_relations_details.push(selected_relations[i].split("-"));
                 if (selected_relations_details[i][0] == "3") {
                     all_cases += point_triplets.length;
@@ -358,18 +368,18 @@
 
             // A. COLLINEAR TRIPLETS
 
-            for (var r = 0; r < selected_relations.length; ++r) {
+            for (let r = 0; r < selected_relations.length; ++r) {
 
                 if (selected_relations_details[r][0] == "3") {
                     var statement_start = selected_relations_details[r][1];
                     var statement_text = selected_relations_details[r][2];
 
-                    for (var i = 0; i < point_triplets.length; ++i, ++cases) {
-                        console.log("Case #" + cases);
+                    for (let i = 0; i < point_triplets.length; ++i, ++cases) {
                         var A = point_triplets[i][0];
                         var B = point_triplets[i][1];
                         var C = point_triplets[i][2];
                         var statement = statement_start + "(" + A + "," + B + "," + C + ")";
+                        console.log("Case #" + cases + ": " + statement);
                         gA.evalCommand("pd=" + statement + "");
                         var result = gA.getValueString("pd");
                         if (!result.includes("true"))
@@ -415,13 +425,12 @@
             }
 
             // B. SEGMENTS HAVING EQUAL LENGTHS, ETC.
-            for (var r = 0; r < selected_relations.length; ++r) {
+            for (let r = 0; r < selected_relations.length; ++r) {
 
                 if (selected_relations_details[r][0] == "22") {
                     var statement_start = selected_relations_details[r][1];
                     var statement_text = selected_relations_details[r][2];
-                    for (var i = 0; i < segment_tuples.length; ++i, ++cases) {
-                        console.log("Case #" + cases);
+                    for (let i = 0; i < segment_tuples.length; ++i, ++cases) {
                         var A = segment_tuples[i][0][0];
                         var B = segment_tuples[i][0][1];
                         var C = segment_tuples[i][1][0];
@@ -439,6 +448,7 @@
                             gA.setVisible(segCD, false);
                         }
                         var statement = statement_start + "(" + segAB + "," + segCD + ")";
+                        console.log("Case #" + cases + ": " + statement);
                         gA.evalCommand("pd=" + statement + "");
                         var result = gA.getValueString("pd");
                         if (!result.includes("true"))
@@ -514,19 +524,19 @@
 
             // C. CONCYCLIC QUADRUPLETS
 
-            for (var r = 0; r < selected_relations.length; ++r) {
+            for (let r = 0; r < selected_relations.length; ++r) {
 
                 if (selected_relations_details[r][0] == "4") {
                     var statement_start = selected_relations_details[r][1];
                     var statement_text = selected_relations_details[r][2];
 
-                    for (var i = 0; i < point_quadruplets.length; ++i, ++cases) {
-                        console.log("Case #" + cases);
+                    for (let i = 0; i < point_quadruplets.length; ++i, ++cases) {
                         var A = point_quadruplets[i][0];
                         var B = point_quadruplets[i][1];
                         var C = point_quadruplets[i][2];
                         var D = point_quadruplets[i][3];
                         var statement = statement_start + "(" + A + "," + B + "," + C + "," + D + ")";
+                        console.log("Case #" + cases + ": " + statement);
                         gA.evalCommand("pd=" + statement + "");
                         var result = gA.getValueString("pd");
                         if (!result.includes("true"))
